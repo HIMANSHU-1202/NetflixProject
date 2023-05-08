@@ -1,0 +1,284 @@
+<html>
+<head>
+<title>main.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #808080;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+main.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">streamlit </span><span class="s0">as </span><span class="s1">st</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+<span class="s0">import </span><span class="s1">matplotlib.pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+<span class="s0">import </span><span class="s1">altair </span><span class="s0">as </span><span class="s1">alt</span>
+
+<span class="s2">#Data import</span>
+<span class="s1">df= pd.read_csv(</span><span class="s3">r&quot;C:\Users\shree\Desktop\Netflix dashboard\netflix_titles.csv&quot;</span><span class="s1">)</span>
+
+<span class="s2">#Streamlit Setup -:</span>
+<span class="s1">st.set_page_config(</span>
+    <span class="s1">page_title=</span><span class="s3">&quot;NETFLIX&quot;</span><span class="s0">,</span>
+    <span class="s1">page_icon=</span><span class="s3">&quot;🧊&quot;</span><span class="s0">,</span>
+    <span class="s1">layout=</span><span class="s3">&quot;wide&quot;</span><span class="s0">,</span>
+    <span class="s1">initial_sidebar_state=</span><span class="s3">&quot;expanded&quot;</span><span class="s1">)</span>
+
+<span class="s0">import </span><span class="s1">streamlit </span><span class="s0">as </span><span class="s1">st</span>
+
+<span class="s1">st.header(</span><span class="s3">'NETFLIX'</span><span class="s1">)</span>
+<span class="s1">st.sidebar.title(</span><span class="s3">&quot;Netflix Content&quot;</span><span class="s1">)</span>
+
+<span class="s1">user_menu = st.sidebar.radio(</span>
+    <span class="s3">'Select an Option'</span><span class="s0">,</span>
+    <span class="s1">(</span><span class="s3">'Recommendation'</span><span class="s0">,</span><span class="s3">'Content by Cast'</span><span class="s0">,</span><span class="s3">'Content by Director'</span><span class="s0">,</span><span class="s3">'Content by Genres'</span><span class="s0">,</span><span class="s3">'Content by Ratings'</span><span class="s1">)</span>
+<span class="s1">)</span>
+
+
+<span class="s2"># Data Processing</span>
+
+<span class="s1">df[</span><span class="s3">'cast'</span><span class="s1">] = df[</span><span class="s3">'cast'</span><span class="s1">].str.replace(</span><span class="s3">r'\s+'</span><span class="s0">, </span><span class="s3">''</span><span class="s1">)</span>
+
+<span class="s1">df[</span><span class="s3">'director'</span><span class="s1">] = df[</span><span class="s3">'director'</span><span class="s1">].str.replace(</span><span class="s3">r'\s+'</span><span class="s0">, </span><span class="s3">''</span><span class="s1">)</span>
+
+<span class="s1">df=df.rename(columns={</span><span class="s3">'listed_in'</span><span class="s1">: </span><span class="s3">'genre'</span><span class="s1">})</span>
+
+<span class="s2">#Now I am creating new column named tags.</span>
+
+<span class="s0">def </span><span class="s1">create_tags(df):</span>
+    <span class="s2"># replace null values with an empty string</span>
+    <span class="s1">df = df.fillna(</span><span class="s3">''</span><span class="s1">)</span>
+
+    <span class="s2"># concatenate columns to create tags column</span>
+    <span class="s1">df[</span><span class="s3">'tags'</span><span class="s1">] = df[</span><span class="s3">'type'</span><span class="s1">] + </span><span class="s3">' ' </span><span class="s1">+ df[</span><span class="s3">'genre'</span><span class="s1">] + </span><span class="s3">' ' </span><span class="s1">+ df[</span><span class="s3">'description'</span><span class="s1">] + </span><span class="s3">' ' </span><span class="s1">+ df[</span><span class="s3">'cast'</span><span class="s1">] + </span><span class="s3">' ' </span><span class="s1">+ df[</span><span class="s3">'director'</span><span class="s1">]</span>
+
+    <span class="s2"># return dataframe with tags column</span>
+    <span class="s0">return </span><span class="s1">df</span>
+
+<span class="s1">tags_df=create_tags(df)</span>
+
+<span class="s1">new_df=tags_df[[</span><span class="s3">'show_id'</span><span class="s0">,</span><span class="s3">'title'</span><span class="s0">,</span><span class="s3">'tags'</span><span class="s1">]]</span>
+
+<span class="s1">new_df[</span><span class="s3">'tags'</span><span class="s1">]=new_df[</span><span class="s3">'tags'</span><span class="s1">].apply(</span><span class="s0">lambda </span><span class="s1">x:x.lower())</span>
+
+<span class="s2">#In tags column i see that some words are repeating so i have to handle that.</span>
+
+<span class="s0">import </span><span class="s1">nltk</span>
+
+<span class="s0">from </span><span class="s1">nltk.stem.porter </span><span class="s0">import </span><span class="s1">PorterStemmer</span>
+
+<span class="s1">ps=PorterStemmer()</span>
+
+
+<span class="s0">def </span><span class="s1">stem(text):</span>
+    <span class="s1">y = []</span>
+
+    <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">text.split():</span>
+        <span class="s1">y.append(ps.stem(i))</span>
+    <span class="s0">return </span><span class="s3">&quot; &quot;</span><span class="s1">.join(y)</span>
+
+<span class="s1">new_df[</span><span class="s3">'tags'</span><span class="s1">]=new_df[</span><span class="s3">'tags'</span><span class="s1">].apply(stem)</span>
+
+<span class="s2">#Text Vectorisation :</span>
+
+<span class="s0">from </span><span class="s1">sklearn.feature_extraction.text  </span><span class="s0">import </span><span class="s1">CountVectorizer</span>
+
+<span class="s1">cv = CountVectorizer(max_features=</span><span class="s4">5000</span><span class="s0">,</span><span class="s1">stop_words= </span><span class="s3">'english'</span><span class="s1">)</span>
+
+<span class="s1">vectors= cv.fit_transform(new_df[</span><span class="s3">'tags'</span><span class="s1">]).toarray()</span>
+
+<span class="s0">from </span><span class="s1">sklearn.metrics.pairwise </span><span class="s0">import </span><span class="s1">cosine_similarity</span>
+
+<span class="s1">similarity=cosine_similarity(vectors)</span>
+
+<span class="s2">#sorted(list(enumerate(similarity[0])),reverse=True,key=lambda x:x[1])[1:11]</span>
+
+<span class="s2">#Recommendation System -:</span>
+
+<span class="s1">title_list = df[</span><span class="s3">'title'</span><span class="s1">].tolist()</span>
+<span class="s1">title_list = sorted(title_list</span><span class="s0">, </span><span class="s1">key=</span><span class="s0">lambda </span><span class="s1">x: str(x).lower())</span>
+<span class="s1">title_list.insert(</span><span class="s4">0</span><span class="s0">, </span><span class="s3">&quot;Select a title&quot;</span><span class="s1">)</span>
+
+<span class="s0">def </span><span class="s1">recommend(movie):</span>
+    <span class="s0">if </span><span class="s1">movie == </span><span class="s3">&quot;Select a title&quot;</span><span class="s1">:</span>
+        <span class="s0">return </span><span class="s1">df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'rating'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+    <span class="s0">else</span><span class="s1">:</span>
+        <span class="s1">movie_index = new_df[new_df[</span><span class="s3">&quot;title&quot;</span><span class="s1">] == movie].index[</span><span class="s4">0</span><span class="s1">]</span>
+        <span class="s1">distances = similarity[movie_index]</span>
+        <span class="s1">movies_list = sorted(list(enumerate(distances))</span><span class="s0">, </span><span class="s1">reverse=</span><span class="s0">True, </span><span class="s1">key=</span><span class="s0">lambda </span><span class="s1">x: x[</span><span class="s4">1</span><span class="s1">])[</span><span class="s4">1</span><span class="s1">:</span><span class="s4">11</span><span class="s1">]</span>
+        <span class="s1">recommended_movies = []</span>
+        <span class="s0">for </span><span class="s1">i </span><span class="s0">in </span><span class="s1">movies_list:</span>
+            <span class="s1">recommended_movies.append(df.iloc[i[</span><span class="s4">0</span><span class="s1">]][[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'rating'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]])</span>
+        <span class="s1">recommended_df = pd.DataFrame(recommended_movies)</span>
+        <span class="s0">return </span><span class="s1">recommended_df</span>
+
+
+
+<span class="s0">if </span><span class="s1">user_menu == </span><span class="s3">'Recommendation'</span><span class="s1">:</span>
+    <span class="s1">st.sidebar.header(</span><span class="s3">'List for Content'</span><span class="s1">)</span>
+    <span class="s1">selected_content = st.sidebar.selectbox(</span><span class="s3">&quot;Select Content&quot;</span><span class="s0">, </span><span class="s1">title_list)</span>
+    <span class="s1">st.header(</span><span class="s3">'Recommendations for ' </span><span class="s1">+selected_content)</span>
+    <span class="s1">x = recommend(selected_content)</span>
+    <span class="s1">st.dataframe(x)</span>
+
+
+    <span class="s2"># Count the number of movies and TV shows</span>
+    <span class="s1">counts = df[</span><span class="s3">'type'</span><span class="s1">].value_counts()</span>
+
+    <span class="s2"># Create a bar chart using Altair</span>
+    <span class="s1">chart = alt.Chart(df).mark_bar().encode(</span>
+    <span class="s1">x=alt.X(</span><span class="s3">'type'</span><span class="s0">, </span><span class="s1">title=</span><span class="s3">'Type of content'</span><span class="s1">)</span><span class="s0">,</span>
+    <span class="s1">y=alt.Y(</span><span class="s3">'count()'</span><span class="s0">, </span><span class="s1">title=</span><span class="s3">'Number of titles'</span><span class="s1">)</span><span class="s0">,</span>
+    <span class="s1">color=alt.Color(</span><span class="s3">'type'</span><span class="s0">, </span><span class="s1">legend=</span><span class="s0">None</span><span class="s1">)</span>
+    <span class="s1">).properties(width=</span><span class="s4">400</span><span class="s0">, </span><span class="s1">height=</span><span class="s4">300</span><span class="s1">)</span>
+
+    <span class="s2"># Display the chart using Streamlit</span>
+    <span class="s1">st.altair_chart(chart)</span>
+
+
+<span class="s2">#Contetnt By Cast -:</span>
+
+<span class="s0">def </span><span class="s1">get_content_by_cast(name):</span>
+    <span class="s0">if </span><span class="s1">name == </span><span class="s3">'Select a cast'</span><span class="s1">:</span>
+        <span class="s0">return </span><span class="s1">df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+    <span class="s0">else</span><span class="s1">:</span>
+        <span class="s1">filtered_df = df[df[</span><span class="s3">'cast'</span><span class="s1">].str.contains(name</span><span class="s0">, </span><span class="s1">na=</span><span class="s0">False</span><span class="s1">)]</span>
+        <span class="s0">return </span><span class="s1">filtered_df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+
+
+<span class="s2">#cast_list = list(set(df['cast'].str.split(',').explode()))</span>
+<span class="s1">cast_list = list(set(df[</span><span class="s3">'cast'</span><span class="s1">].str.split(</span><span class="s3">','</span><span class="s1">).explode().map(str)))</span>
+<span class="s1">cast_list = sorted(cast_list</span><span class="s0">, </span><span class="s1">key=</span><span class="s0">lambda </span><span class="s1">x: str(x).lower())</span>
+<span class="s1">cast_list.insert(</span><span class="s4">0</span><span class="s0">, </span><span class="s3">&quot;Select a cast&quot;</span><span class="s1">)</span>
+
+<span class="s0">if </span><span class="s1">user_menu == </span><span class="s3">'Content by Cast'</span><span class="s1">:</span>
+    <span class="s1">st.sidebar.header(</span><span class="s3">'List for Cast'</span><span class="s1">)</span>
+    <span class="s1">selected_cast = st.sidebar.selectbox(</span><span class="s3">&quot;Select cast&quot;</span><span class="s0">, </span><span class="s1">cast_list)</span>
+    <span class="s1">st.header(</span><span class="s3">'Content By Casts '</span><span class="s1">+ selected_cast)</span>
+    <span class="s1">cast_rec = get_content_by_cast(selected_cast)</span>
+    <span class="s1">st.dataframe(cast_rec)</span>
+
+
+
+<span class="s2">#Content By Director -:</span>
+<span class="s1">director_list = df[</span><span class="s3">'director'</span><span class="s1">].dropna().unique().tolist()</span>
+<span class="s1">director_list = sorted(director_list</span><span class="s0">, </span><span class="s1">key=</span><span class="s0">lambda </span><span class="s1">x: str(x).lower())</span>
+<span class="s1">director_list.insert(</span><span class="s4">0</span><span class="s0">, </span><span class="s3">&quot;Select a director&quot;</span><span class="s1">)</span>
+<span class="s0">def </span><span class="s1">get_content_by_director(director):</span>
+    <span class="s0">if </span><span class="s1">director == </span><span class="s3">&quot;Select a director&quot;</span><span class="s1">:</span>
+        <span class="s0">return </span><span class="s1">df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+    <span class="s0">else</span><span class="s1">:</span>
+        <span class="s1">filtered_df = df[df[</span><span class="s3">'director'</span><span class="s1">].str.contains(director</span><span class="s0">, </span><span class="s1">na=</span><span class="s0">False</span><span class="s1">)]</span>
+    <span class="s0">return </span><span class="s1">filtered_df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+
+<span class="s0">if </span><span class="s1">user_menu == </span><span class="s3">'Content by Director'</span><span class="s1">:</span>
+    <span class="s1">st.sidebar.header(</span><span class="s3">'List for Director'</span><span class="s1">)</span>
+    <span class="s1">selected_director = st.sidebar.selectbox(</span><span class="s3">&quot;Select Director&quot;</span><span class="s0">, </span><span class="s1">director_list)</span>
+    <span class="s1">st.header(</span><span class="s3">'Content By Director '</span><span class="s1">+ selected_director)</span>
+    <span class="s1">director_rec = get_content_by_director(selected_director)</span>
+    <span class="s1">st.dataframe(director_rec)</span>
+
+
+<span class="s2">#Content By Genres -:</span>
+
+<span class="s1">genre_list = list(set(df[</span><span class="s3">'genre'</span><span class="s1">].str.split(</span><span class="s3">','</span><span class="s1">).explode()))</span>
+
+<span class="s1">genre_list = sorted(genre_list</span><span class="s0">, </span><span class="s1">key=</span><span class="s0">lambda </span><span class="s1">x: str(x).lower())</span>
+
+<span class="s1">genre_list.insert(</span><span class="s4">0</span><span class="s0">, </span><span class="s3">&quot;Select a Genre&quot;</span><span class="s1">)</span>
+
+<span class="s0">def </span><span class="s1">get_content_by_genre(genre):</span>
+    <span class="s0">if </span><span class="s1">genre == </span><span class="s3">&quot;Select a Genre&quot;</span><span class="s1">:</span>
+        <span class="s0">return </span><span class="s1">df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+    <span class="s0">else</span><span class="s1">:</span>
+        <span class="s1">filtered_df = df[df[</span><span class="s3">'genre'</span><span class="s1">].str.contains(genre</span><span class="s0">, </span><span class="s1">na=</span><span class="s0">False</span><span class="s1">)]</span>
+    <span class="s0">return </span><span class="s1">filtered_df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+
+<span class="s0">if </span><span class="s1">user_menu == </span><span class="s3">'Content by Genres'</span><span class="s1">:</span>
+    <span class="s1">st.sidebar.header(</span><span class="s3">'List for Genres'</span><span class="s1">)</span>
+    <span class="s1">selected_genre = st.sidebar.selectbox(</span><span class="s3">&quot;Select Genre&quot;</span><span class="s0">, </span><span class="s1">genre_list)</span>
+    <span class="s1">st.header(</span><span class="s3">'Content By Genres '</span><span class="s1">+ selected_genre)</span>
+    <span class="s1">genre_rec = get_content_by_genre(selected_genre)</span>
+    <span class="s1">st.dataframe(genre_rec)</span>
+
+    <span class="s2">#Chart for genre</span>
+    <span class="s2"># Group by genre and type and count the number of occurrences</span>
+    <span class="s1">genre_counts = df.groupby([</span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'type'</span><span class="s1">]).size().reset_index(name=</span><span class="s3">'count'</span><span class="s1">)</span>
+
+    <span class="s2"># Plot using Altair</span>
+    <span class="s1">genre_chart = alt.Chart(genre_counts).mark_bar().encode(</span>
+        <span class="s1">x=</span><span class="s3">'genre'</span><span class="s0">,</span>
+        <span class="s1">y=</span><span class="s3">'count'</span><span class="s0">,</span>
+        <span class="s1">color=</span><span class="s3">'type'</span><span class="s0">,</span>
+        <span class="s1">tooltip=[</span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'count'</span><span class="s1">]</span>
+    <span class="s1">).properties(</span>
+        <span class="s1">width=</span><span class="s4">600</span><span class="s0">,</span>
+        <span class="s1">height=</span><span class="s4">400</span>
+    <span class="s1">)</span>
+
+    <span class="s2"># Display the chart using Streamlit</span>
+    <span class="s1">st.altair_chart(genre_chart)</span>
+
+<span class="s2">#Content Based on Rating</span>
+<span class="s1">rating_list = tags_df[</span><span class="s3">'rating'</span><span class="s1">].unique().tolist()</span>
+<span class="s1">rating_list.sort()</span>
+<span class="s1">rating_list.insert(</span><span class="s4">0</span><span class="s0">, </span><span class="s3">&quot;Select a rating&quot;</span><span class="s1">)</span>
+
+<span class="s0">def </span><span class="s1">get_columns_by_rating(rating):</span>
+    <span class="s0">if </span><span class="s1">rating == </span><span class="s3">&quot;Select a rating&quot;</span><span class="s1">:</span>
+        <span class="s0">return </span><span class="s1">df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+    <span class="s0">else</span><span class="s1">:</span>
+        <span class="s2"># filter the dataframe by rating</span>
+        <span class="s1">filtered_df = df[df[</span><span class="s3">'rating'</span><span class="s1">] &gt;= rating]</span>
+
+        <span class="s2"># return the columns from the filtered dataframe</span>
+        <span class="s0">return </span><span class="s1">filtered_df[[</span><span class="s3">'type'</span><span class="s0">, </span><span class="s3">'title'</span><span class="s0">, </span><span class="s3">'director'</span><span class="s0">, </span><span class="s3">'cast'</span><span class="s0">, </span><span class="s3">'genre'</span><span class="s0">, </span><span class="s3">'description'</span><span class="s1">]]</span>
+
+
+<span class="s0">if </span><span class="s1">user_menu == </span><span class="s3">'Content by Ratings'</span><span class="s1">:</span>
+    <span class="s1">st.sidebar.header(</span><span class="s3">'List for Rating'</span><span class="s1">)</span>
+    <span class="s1">selected_rating = st.sidebar.selectbox(</span><span class="s3">&quot;Select rating&quot;</span><span class="s0">, </span><span class="s1">rating_list)</span>
+    <span class="s1">st.header(</span><span class="s3">'Content for ' </span><span class="s1">+ selected_rating)</span>
+    <span class="s1">rating_rec = get_columns_by_rating(selected_rating)</span>
+    <span class="s1">st.dataframe(rating_rec)</span>
+
+    <span class="s2"># Filter data by type</span>
+    <span class="s1">movies = df[df[</span><span class="s3">'type'</span><span class="s1">] == </span><span class="s3">'Movie'</span><span class="s1">]</span>
+    <span class="s1">tv_shows = df[df[</span><span class="s3">'type'</span><span class="s1">] == </span><span class="s3">'TV Show'</span><span class="s1">]</span>
+
+    <span class="s2"># Group data by rating and count the number of movies and TV shows for each rating</span>
+    <span class="s1">movies_by_rating = movies.groupby(</span><span class="s3">'rating'</span><span class="s1">).size().reset_index(name=</span><span class="s3">'count'</span><span class="s1">)</span>
+    <span class="s1">tv_shows_by_rating = tv_shows.groupby(</span><span class="s3">'rating'</span><span class="s1">).size().reset_index(name=</span><span class="s3">'count'</span><span class="s1">)</span>
+
+    <span class="s2"># Create line chart for movies</span>
+    <span class="s1">movies_chart = alt.Chart(movies_by_rating).mark_line(color=</span><span class="s3">'red'</span><span class="s1">).encode(</span>
+        <span class="s1">x=</span><span class="s3">'rating:N'</span><span class="s0">,</span>
+        <span class="s1">y=</span><span class="s3">'count:Q'</span><span class="s0">,</span>
+        <span class="s1">tooltip=[</span><span class="s3">'rating:N'</span><span class="s0">, </span><span class="s3">'count:Q'</span><span class="s1">]</span><span class="s0">,</span>
+    <span class="s1">).properties(</span>
+        <span class="s1">title=</span><span class="s3">'Number of Movies by Rating'</span>
+    <span class="s1">)</span>
+
+    <span class="s2"># Create line chart for TV shows</span>
+    <span class="s1">tv_shows_chart = alt.Chart(tv_shows_by_rating).mark_line(color=</span><span class="s3">'blue'</span><span class="s1">).encode(</span>
+        <span class="s1">x=</span><span class="s3">'rating:N'</span><span class="s0">,</span>
+        <span class="s1">y=</span><span class="s3">'count:Q'</span><span class="s0">,</span>
+        <span class="s1">tooltip=[</span><span class="s3">'rating:N'</span><span class="s0">, </span><span class="s3">'count:Q'</span><span class="s1">]</span><span class="s0">,</span>
+    <span class="s1">).properties(</span>
+        <span class="s1">title=</span><span class="s3">'Number of TV Shows by Rating'</span>
+    <span class="s1">)</span>
+
+    <span class="s2"># Combine charts and show in streamlit</span>
+    <span class="s1">st.altair_chart(movies_chart + tv_shows_chart</span><span class="s0">, </span><span class="s1">use_container_width=</span><span class="s0">True</span><span class="s1">)</span>
+</pre>
+</body>
+</html>
